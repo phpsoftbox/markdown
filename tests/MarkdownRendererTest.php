@@ -15,12 +15,16 @@ use PhpSoftBox\Markdown\MarkdownRenderOptions;
 use PhpSoftBox\Markdown\MarkdownResolvedAsset;
 use PhpSoftBox\Markdown\MarkdownResolvedLink;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function array_map;
+use function preg_match_all;
+use function range;
 
 #[CoversClass(MarkdownRenderer::class)]
+#[CoversMethod(MarkdownRenderer::class, 'render')]
 final class MarkdownRendererTest extends TestCase
 {
     /**
@@ -199,6 +203,47 @@ MD;
             $this->assertStringContainsString('markdown-admonition--' . $type, $html);
         }
         $this->assertNotContains('admonition.unknown', $this->diagnosticCodes($document));
+    }
+
+    /**
+     * Проверяем, что при 11+ admonition-блоках каждый получает свой контент (метка 1 не задевает метку 10).
+     *
+     * @see MarkdownRenderer::render()
+     */
+    #[Test]
+    public function testRendersElevenAdmonitionsWithOwnContent(): void
+    {
+        $source = '';
+        for ($i = 0; $i < 11; $i++) {
+            $source .= ":::note\nItem {$i}\n:::\n\n";
+        }
+
+        $html = new MarkdownRenderer()->render($source)->html();
+
+        // Порядок контента совпадает с исходным, метки не остаются в HTML.
+        preg_match_all('~Item (\d+)~', $html, $matches);
+        $this->assertSame(array_map('strval', range(0, 10)), $matches[1]);
+        $this->assertStringNotContainsString('PSB_MARKDOWN_', $html);
+    }
+
+    /**
+     * Проверяем, что при 11+ tabs-блоках каждый получает свои вкладки.
+     *
+     * @see MarkdownRenderer::render()
+     */
+    #[Test]
+    public function testRendersElevenTabsBlocksWithOwnContent(): void
+    {
+        $source = '';
+        for ($i = 0; $i < 11; $i++) {
+            $source .= ":::tabs\n@tab Tab {$i}\nBody {$i}\n:::\n\n";
+        }
+
+        $html = new MarkdownRenderer()->render($source)->html();
+
+        preg_match_all('~Body (\d+)~', $html, $matches);
+        $this->assertSame(array_map('strval', range(0, 10)), $matches[1]);
+        $this->assertStringNotContainsString('PSB_MARKDOWN_', $html);
     }
 
     /**
