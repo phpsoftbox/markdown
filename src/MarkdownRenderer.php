@@ -262,7 +262,7 @@ final class MarkdownRenderer implements MarkdownRendererInterface
                 continue;
             }
 
-            $token  = 'PSB_MARKDOWN_TABS_' . count($tabs);
+            $token  = $this->placeholder('TABS', count($tabs));
             $tabs[] = [
                 'token' => $token,
                 'tabs'  => $parsedTabs,
@@ -425,7 +425,7 @@ final class MarkdownRenderer implements MarkdownRendererInterface
                 continue;
             }
 
-            $token         = 'PSB_MARKDOWN_ADMONITION_' . count($admonitions);
+            $token         = $this->placeholder('ADMONITION', count($admonitions));
             $admonitions[] = [
                 'token'   => $token,
                 'type'    => $type,
@@ -769,6 +769,14 @@ final class MarkdownRenderer implements MarkdownRendererInterface
         $parent->replaceChild($figure, $pre);
         $figure->appendChild($caption);
         $figure->appendChild($pre);
+    }
+
+    /**
+     * Метка блока с завершающим суффиксом: без него замена `..._1` задела бы `..._10`.
+     */
+    private function placeholder(string $kind, int $index): string
+    {
+        return sprintf('PSB_MARKDOWN_%s_%d_END', $kind, $index);
     }
 
     private function isDangerousUrl(string $url): bool

@@ -211,6 +211,10 @@ $document = $renderer->render($source, new MarkdownRenderOptions(
 Даже при разрешенном HTML renderer блокирует опасные URL schemes:
 `javascript:`, `vbscript:`, `data:`.
 
+`MarkdownHtmlPolicy::Allow` — только для доверенного контента: renderer не санитизирует
+HTML, `<script>`, `<iframe>` и атрибуты-обработчики (`onerror`, `onclick`) попадают в
+результат как есть. Для пользовательского ввода используйте `Escape` или `Strip`.
+
 Для внешних ссылок можно включить target/rel:
 
 ```php
